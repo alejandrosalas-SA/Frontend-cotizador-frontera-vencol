@@ -1,0 +1,137 @@
+export interface User {
+  cod_emp: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  id_rol: number;
+  status: number;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+// Interfaces para el Cotizador
+export interface Tercero {
+  tipo_persona: 'N' | 'J';
+  solicitante: string;
+  email: string;
+  id_sucursal?: number | null;
+  id_intermediario?: number | string | null;
+  nom_intermediario?: string | null;
+}
+
+export interface Vehiculo {
+  marca: string; // CODMARCA (3 chars)
+  modelo: string; // codmodelo (4 chars)
+  anho: number;
+  placa: string;
+  nro_puesto: number;
+  duracion: number;
+  tipo_exceso: number | null;
+  tipo_vehiculo: number | null;
+  tasacion_especial: number | null;
+  autorizado_nombre?: string;
+  autorizado_sucursal?: number | null;
+}
+
+// Tipos para el sistema de cotizaciones
+export interface Cobertura {
+  id_cobertura: number;
+  nombre: string;
+  valor_asegurado: number;
+  prima: number;
+}
+
+export interface SolicitudPayload {
+  solicitante: Tercero;
+  vehiculo: Vehiculo;
+  coberturas: Cobertura[];
+  opcionales?: Cobertura[];
+  observaciones?: string;
+  condiciones?: string;
+  status?: number;
+  nro_version?: string;
+}
+
+export interface SolicitudListItem {
+  id: number;
+  status: number;
+  fecha_emision: string;
+  nro_version: string;
+  condiciones?: string;
+  observaciones?: string;
+  solicitante_nombre: string;
+  solicitante_email: string;
+  tipo_persona: string;
+  vehiculo_placa: string;
+  vehiculo_marca: string;
+  vehiculo_modelo: string;
+  vehiculo_anho: number;
+}
+
+export interface CoberturaDB {
+  id: number;
+  id_solicitud: number;
+  tipo_cobertura: string;
+  prima: number;
+}
+
+export interface OpcionalDB {
+  id: number;
+  id_solicitud: number;
+  prima_gasto: number;
+  prima_invalidez: number;
+  prima_muerte: number;
+}
+
+export interface SolicitudDetalle {
+  id: number;
+  status: number;
+  fecha_emision: string;
+  nro_version: string;
+  condiciones?: string;
+  observaciones?: string;
+  // Solicitante
+  solicitante_nombre: string;
+  solicitante_email: string;
+  tipo_persona: string;
+  id_intermediario?: number | string;
+  nom_intermediario?: string;
+  solicitante_id_sucursal?: number;
+  solicitante_sucursal_nombre?: string;
+  // Vehículo
+  marca: string;
+  modelo: string;
+  marca_nombre?: string;
+  modelo_nombre?: string;
+  anho: number;
+  placa: string;
+  nro_puesto: number;
+  duracion?: number;
+  tipo_exceso?: number;
+  tipo_vehiculo?: number;
+  tipo_vehiculo_etiqueta?: string;
+  tasacion_especial?: number;
+  autorizado_nombre?: string;
+  autorizado_sucursal?: number;
+  autorizado_sucursal_nombre?: string;
+  duracion_viaje_nombre?: string;
+  tipo_exceso_nombre?: string;
+  tipo_vehiculo_nombre?: string;
+  tasacion_especial_nombre?: string;
+  // Relaciones
+  coberturas: CoberturaDB[];
+  opcionales: OpcionalDB[];
+}
+
+export interface UpdateSolicitudPayload {
+  status: number;
+  condiciones?: string;
+  observaciones?: string;
+  solicitante?: Tercero;
+  vehiculo?: Vehiculo;
+  coberturas?: Cobertura[];
+  opcionales?: Cobertura[];
+}
