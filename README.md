@@ -21,7 +21,7 @@ Para más información sobre las características de este producto, visita el si
 
 <div align="center">
   <video width="100%" controls autoplay loop muted>
-    <source src="./src/assets/Animación_de_Camión_en_Vía.mp4" type="video/mp4">
+    <source src="/src/assets/Animación_de_Camión_en_Vía.mp4" type="video/mp4">
     Tu navegador no soporta la etiqueta de video.
   </video>
 </div>
