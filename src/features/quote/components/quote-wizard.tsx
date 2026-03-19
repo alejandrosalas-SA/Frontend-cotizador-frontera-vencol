@@ -38,11 +38,11 @@ export const QuoteWizard = () => {
     id_sucursal: detalle.solicitante_id_sucursal ?? null,
     id_intermediario: detalle.id_intermediario ?? null,
     nom_intermediario: detalle.nom_intermediario ?? '',
-  } : undefined;
+  } : (data.solicitante as any) || undefined;
 
   const draftVehicleValues = isEditing && detalle ? {
-    marca: detalle.marca ?? '',
-    modelo: detalle.modelo ?? '',
+    marca: detalle.marca != null ? String(detalle.marca) : '',
+    modelo: detalle.modelo != null ? String(detalle.modelo) : '',
     anho: detalle.anho ?? new Date().getFullYear(),
     placa: detalle.placa ?? '',
     nro_puesto: detalle.nro_puesto ?? 1,
@@ -52,7 +52,7 @@ export const QuoteWizard = () => {
     tasacion_especial: detalle.tasacion_especial ?? null,
     autorizado_nombre: detalle.autorizado_nombre ?? '',
     autorizado_sucursal: detalle.autorizado_sucursal ?? null,
-  } : undefined;
+  } : (data.vehiculo as any) || undefined;
 
   // Carga el store con los metadatos del borrador (sin coberturas históricas)
   useEffect(() => {

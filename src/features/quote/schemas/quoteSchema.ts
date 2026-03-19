@@ -16,8 +16,8 @@ export const applicantSchema = z.object({
 export type ApplicantFormData = z.infer<typeof applicantSchema>;
 
 export const vehicleSchema = z.object({
-    marca: z.string("La marca es requerida").min(1, 'La marca es requerida'),
-    modelo: z.string("El modelo es requerido").min(1, 'El modelo es requerido'),
+    marca: z.string().min(1, 'La marca es requerida'),
+    modelo: z.string().min(1, 'El modelo es requerido'),
     anho: z.coerce.number('El año es requerido').int().min(1900, { message: 'El año debe ser mayor a 1900' }).max(new Date().getFullYear() + 1, { message: 'No puede ser un año mayor al actual' }),
     placa: z.string("La placa es requerida").min(1, 'La placa es requerida').toUpperCase(),
     nro_puesto: z.coerce.number({ message: 'El número de puestos es requerido' }).int().positive('Número de puestos inválido'),

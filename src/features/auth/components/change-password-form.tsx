@@ -54,7 +54,7 @@ export const ChangePasswordForm = () => {
   const strengthScore = Object.values(passwordStrength).filter(Boolean).length;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <button
         onClick={() => navigate(-1)}
         className="flex items-center text-slate-500 hover:text-[#003366] mb-6 transition-colors font-medium"
@@ -63,23 +63,15 @@ export const ChangePasswordForm = () => {
         Volver
       </button>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">Cambiar Contraseña</h2>
-          <p className="text-slate-500 mt-1">
-            Ingresa tus credenciales para actualizar tu acceso al sistema.
-          </p>
-        </div>
-
-        {showSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-            <div>
-              <p className="font-medium text-green-900">¡Contraseña actualizada!</p>
-              <p className="text-sm text-green-700">Tu contraseña ha sido cambiada exitosamente.</p>
-            </div>
+      {showSuccess && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+          <div>
+            <p className="font-medium text-green-900">¡Contraseña actualizada!</p>
+            <p className="text-sm text-green-700">Tu contraseña ha sido cambiada exitosamente.</p>
           </div>
-        )}
+        </div>
+      )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
@@ -231,7 +223,6 @@ export const ChangePasswordForm = () => {
             </Button>
           </div>
         </form>
-      </div>
     </div>
   );
 };

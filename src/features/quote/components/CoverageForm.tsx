@@ -101,23 +101,23 @@ export const CoverageForm = () => {
                     <div className="p-2 border border-slate-300 text-xs font-bold text-center bg-blue-50">Prima según duración del viaje</div>
 
                     <LabelCell>Muerte y/o Daños Personales (DP)</LabelCell>
-                    <Cell className="text-right font-mono">{sumasAseguradas?.exceso?.length ? formatCurrency(getSuma('exceso', 1)) : '-'}</Cell>
-                    <Cell className="text-right font-mono">{sumasAseguradas?.exceso?.length ? formatCurrency(getSuma('exceso', 4)) : '-'}</Cell>
+                    <Cell className="text-right font-mono">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 1)) : '-'}</Cell>
+                    <Cell className="text-right font-mono">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 4)) : '-'}</Cell>
                     <Cell className="row-span-3 flex items-center justify-center font-bold text-lg text-[#003366]">
                         {formatCurrency(cotizacionFinal?.prima_exceso)}
                     </Cell>
 
                     <LabelCell>Daños Materiales (DM)</LabelCell>
-                    <Cell className="text-right font-mono">{sumasAseguradas?.exceso?.length ? formatCurrency(getSuma('exceso', 2)) : '-'}</Cell>
-                    <Cell className="text-right font-mono">{sumasAseguradas?.exceso?.length ? formatCurrency(getSuma('exceso', 5)) : '-'}</Cell>
+                    <Cell className="text-right font-mono">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 2)) : '-'}</Cell>
+                    <Cell className="text-right font-mono">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 5)) : '-'}</Cell>
 
                     <LabelCell>Varias Reclamaciones Relacionadas con un mismo Evento (LIM)</LabelCell>
-                    <Cell className="text-right font-mono">{sumasAseguradas?.exceso?.length ? formatCurrency(getSuma('exceso', 3)) : '-'}</Cell>
+                    <Cell className="text-right font-mono">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 3)) : '-'}</Cell>
                     <div className="grid grid-cols-2">
                         <div className="p-1 border-r border-slate-300 text-xs">(DP)</div>
-                        <div className="p-1 text-right font-mono text-xs">{sumasAseguradas?.exceso?.length ? formatCurrency(getSuma('exceso', 6)) : '-'}</div>
+                        <div className="p-1 text-right font-mono text-xs">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 6)) : '-'}</div>
                         <div className="p-1 border-t border-r border-slate-300 text-xs">(DM)</div>
-                        <div className="p-1 border-t text-right font-mono text-xs">{sumasAseguradas?.exceso?.length ? formatCurrency(getSuma('exceso', 7)) : '-'}</div>
+                        <div className="p-1 border-t text-right font-mono text-xs">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 7)) : '-'}</div>
                     </div>
                 </div>
             </div>

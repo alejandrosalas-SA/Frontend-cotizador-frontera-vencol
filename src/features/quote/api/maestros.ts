@@ -26,6 +26,7 @@ export interface SumaAseguradaItem {
     tipo_cobertura: string;
     tipo_exceso: number | null;
     valor: number;
+    tipo_beneficiario?: string | null;
 }
 
 export interface SumasAseguradasResponse {

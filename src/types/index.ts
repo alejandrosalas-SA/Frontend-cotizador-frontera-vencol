@@ -135,3 +135,45 @@ export interface UpdateSolicitudPayload {
   coberturas?: Cobertura[];
   opcionales?: Cobertura[];
 }
+
+// --- Admin: Primas y Sumas Aseguradas ---
+export interface Tarifa {
+  id: number;
+  tipo_cobertura: string;
+  tipo_exceso: number | null;
+  tipo_exceso_nombre: string | null;
+  id_tasacion_especial: number | null;
+  tasacion_especial_nombre: string | null;
+  duracion_viaje: number;
+  duracion_viaje_nombre: string;
+  tipo_transporte: number;
+  tipo_transporte_nombre: string;
+  prima: number;
+  id_usuario: string;
+  fe_us_in: string;
+}
+
+export interface SumaAsegurada {
+  id: number;
+  tipo_cobertura: string;
+  id_def_termino: number;
+  tipo_exceso: number;
+  valor: number;
+  tipo_beneficiario?: string | null;
+  id_usuario: string;
+  fe_us_in: string;
+}
+
+export interface UpdateTarifaPayload {
+  prima: number;
+}
+
+export interface UpdateSumaAseguradaPayload {
+  valor: number;
+}
+
+export interface DefinicionTermino {
+  id: number;
+  nombre: string;
+  etiqueta: string;
+}

@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
-import { Home, FileText, PlusCircle, CheckSquare, LogOut } from 'lucide-react';
+import { Home, FileText, PlusCircle, CheckSquare, LogOut, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Asegúrate de tener utils.ts de shadcn
 import logo from '@/assets/Logos-Seguros-Altamira/logo-blanco-horizontal.svg';
 
@@ -19,6 +19,8 @@ export const AppRoot = () => {
     { name: 'Cotizar', href: '/app/cotizar', icon: PlusCircle },
     // Solo mostramos Aprobaciones si es rol 2 (Supervisor)
     ...(user?.id_rol === 2 ? [{ name: 'Aprobaciones', href: '/app/aprobaciones', icon: CheckSquare }] : []),
+    // Solo mostramos Primas y Sumas si es rol 1 (Administrador)
+    ...(user?.id_rol === 1 ? [{ name: 'Primas y Sumas', href: '/app/primas', icon: Percent }] : []),
   ];
 
   return (
@@ -58,7 +60,7 @@ export const AppRoot = () => {
             <div className="text-sm overflow-hidden">
               <p className="font-medium truncate">{user?.nombre}</p>
               <p className="text-xs text-blue-100/60 capitalize">
-                {user?.id_rol === 2 ? 'Supervisor' : 'Emisor'}
+                {user?.id_rol === 1 ? 'Administrador' : user?.id_rol === 2 ? 'Supervisor' : 'Emisor'}
               </p>
             </div>
           </div>

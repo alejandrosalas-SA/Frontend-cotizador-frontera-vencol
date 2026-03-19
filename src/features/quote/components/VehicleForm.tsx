@@ -50,7 +50,7 @@ export const VehicleForm = forwardRef(({ initialValues }: VehicleFormProps, ref)
         resetOptions: {
             keepDirtyValues: true, // preserva ediciones del usuario si regresa al paso
         },
-        mode: 'onTouched'
+        mode: 'onChange'
     });
 
     // Hydratación inicial manejada por defaultValues. 
@@ -104,8 +104,8 @@ export const VehicleForm = forwardRef(({ initialValues }: VehicleFormProps, ref)
     const { data: transportes = [], isLoading: isLoadingTransportes } = useTiposTransporte();
     const { data: tasaciones = [], isLoading: isLoadingTasaciones } = useTasacionesEspeciales();
 
-    const marcaOptions = marcas.map(m => ({ value: m.cod_marca, label: m.marca }));
-    const modeloOptions = modelos.map(m => ({ value: m.codmodelo, label: m.descmodelo }));
+    const marcaOptions = marcas.map(m => ({ value: String(m.cod_marca), label: m.marca }));
+    const modeloOptions = modelos.map(m => ({ value: String(m.codmodelo), label: m.descmodelo }));
     const sucursalOptions = sucursales.map(s => ({ value: s.id, label: s.nombre }));
     const duracionOptions = duraciones.map(d => ({ value: d.id, label: d.nombre }));
     const excesoOptions = excesos.map(e => ({ value: e.id, label: e.nombre }));
@@ -151,10 +151,10 @@ export const VehicleForm = forwardRef(({ initialValues }: VehicleFormProps, ref)
                                     classNamePrefix="react-select"
                                     menuPortalTarget={document.body}
                                     menuPosition="fixed"
-                                    value={marcaOptions.find(o => o.value === field.value) || null}
+                                    value={marcaOptions.find(o => o.value === String(field.value)) || null}
                                     onChange={(val) => {
-                                        field.onChange(val?.value || '');
-                                        setValue('modelo', '', { shouldValidate: true });
+                                        field.onChange(val?.value ?? '');
+                                        setValue('modelo', '', { shouldValidate: false, shouldDirty: true });
                                     }}
                                     placeholder="Marca..."
                                     styles={selectStyles(errors.marca)}
@@ -179,8 +179,8 @@ export const VehicleForm = forwardRef(({ initialValues }: VehicleFormProps, ref)
                                     classNamePrefix="react-select"
                                     menuPortalTarget={document.body}
                                     menuPosition="fixed"
-                                    value={modeloOptions.find(o => o.value === field.value) || null}
-                                    onChange={(val) => field.onChange(val?.value || '')}
+                                    value={modeloOptions.find(o => o.value === String(field.value)) || null}
+                                    onChange={(val) => field.onChange(val?.value ?? '')}
                                     placeholder="Modelo..."
                                     styles={selectStyles(errors.modelo)}
                                 />

@@ -7,6 +7,7 @@ import { ChangePasswordRoute } from './routes/app/change-password';
 import { CreatePasswordRoute } from './routes/auth/create-password';
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
 import { SolicitudesRoute } from './routes/app/solicitudes';
+import { PrimasRoute } from './routes/app/primas';
 
 export const createAppRouter = () =>
   createBrowserRouter([
@@ -50,6 +51,14 @@ export const createAppRouter = () =>
           element: (
             <ProtectedRoute requiredRole={2}>
               <div>Vista de Aprobaciones (Placeholder)</div>
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: 'primas',
+          element: (
+            <ProtectedRoute requiredRole={1}>
+              <PrimasRoute />
             </ProtectedRoute>
           ),
         },
