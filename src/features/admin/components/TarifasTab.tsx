@@ -11,19 +11,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EditValueModal } from './EditValueModal';
-import { useTarifas, useUpdateTarifa } from '../hooks/useTarifas';
+import { useTarifas, useUpdateTarifa, useTasasOpcionales, useUpdateTasaOpcional } from '../hooks/useTarifas';
 import { useToast } from '@/lib/toast';
-import type { Tarifa } from '@/types';
+import type { Tarifa, TasaOpcional } from '@/types';
 
 interface SelectedTarifa {
   id: number;
   prima: number;
   label: string;
+  isOpcional?: boolean;
 }
 
 export const TarifasTab = () => {
   const { data: tarifas = [], isLoading } = useTarifas();
+  const { data: tasasOpcionales = [], isLoading: isLoadingOpcionales } = useTasasOpcionales();
   const updateMutation = useUpdateTarifa();
+  const updateOpcionalMutation = useUpdateTasaOpcional();
   const { success: toastSuccess, error: toastError } = useToast();
   const [selected, setSelected] = useState<SelectedTarifa | null>(null);
 
@@ -52,10 +55,23 @@ export const TarifasTab = () => {
     });
   };
 
+  const handleEditOpcional = (tasa: TasaOpcional) => {
+    setSelected({
+      id: tasa.id,
+      prima: tasa.tasa,
+      label: tasa.nombre_cobertura,
+      isOpcional: true,
+    });
+  };
+
   const handleSubmit = async (value: number) => {
     if (!selected) return;
     try {
-      await updateMutation.mutateAsync({ id: selected.id, payload: { prima: value } });
+      if (selected.isOpcional) {
+        await updateOpcionalMutation.mutateAsync({ id: selected.id, payload: { tasa: value } });
+      } else {
+        await updateMutation.mutateAsync({ id: selected.id, payload: { prima: value } });
+      }
       toastSuccess('Prima actualizada correctamente');
       setSelected(null);
     } catch (err: unknown) {
@@ -64,7 +80,7 @@ export const TarifasTab = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingOpcionales) {
     return (
       <div className="py-12 text-center text-slate-400 text-sm">
         Cargando tarifas...
@@ -195,6 +211,52 @@ export const TarifasTab = () => {
         })}
       </div>
 
+      {/* Sección TASAS_OPCIONALES */}
+      {tasasOpcionales.length > 0 && (
+        <div className="border border-slate-200 rounded-lg overflow-hidden mt-6 w-5/6 mx-auto">
+          <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+            <h3 className="font-semibold text-slate-700 uppercase tracking-wide text-sm">
+              Cobertura OPCIONAL (Tripulante) — Prima por puesto
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/50">
+                  <TableHead className="font-semibold">Cobertura</TableHead>
+                  <TableHead className="text-center font-semibold text-xs">Tasa</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tasasOpcionales.map((tasa) => (
+                  <TableRow key={tasa.id}>
+                    <TableCell className="text-left text-slate-700 text-sm">
+                      {tasa.etiqueta || tasa.nombre_cobertura}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="font-mono text-sm">
+                          {Number(tasa.tasa).toFixed(6)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-slate-400 hover:text-[#003366]"
+                          onClick={() => handleEditOpcional(tasa)}
+                          title="Editar prima"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
       {selected && (
         <EditValueModal
           open={!!selected}
@@ -202,7 +264,7 @@ export const TarifasTab = () => {
           title="Editar Prima"
           label={selected.label}
           currentValue={selected.prima}
-          isLoading={updateMutation.isPending}
+          isLoading={updateMutation.isPending || updateOpcionalMutation.isPending}
           onSubmit={handleSubmit}
         />
       )}

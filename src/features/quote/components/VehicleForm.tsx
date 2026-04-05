@@ -19,8 +19,13 @@ interface VehicleFormProps {
     initialValues?: Record<string, any>;
 }
 
+const opcionalOptions = [
+    { value: false, label: 'No incluir cobertura opcional' },
+    { value: true,  label: 'Sí, incluir cobertura opcional de tripulante' },
+];
+
 export const VehicleForm = forwardRef(({ initialValues }: VehicleFormProps, ref) => {
-    const { updateData } = useQuoteStore();
+    const { updateData, con_opcional, setConOpcional } = useQuoteStore();
     const { user } = useAuthStore();
 
     const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<VehicleFormData>({
@@ -315,6 +320,28 @@ export const VehicleForm = forwardRef(({ initialValues }: VehicleFormProps, ref)
                             )}
                         />
                         {errors.tasacion_especial && <span className="text-red-500 text-xs mt-1">{errors.tasacion_especial.message}</span>}
+                    </div>
+                </div>
+            </div>
+
+            {/* Sección: Coberturas Opcionales */}
+            <div>
+                <div className="bg-[#003366] text-white py-2 px-4 font-bold text-center mb-6">
+                    Coberturas Opcionales
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 px-4">
+                    <div className="flex flex-col">
+                        <label className="text-sm font-semibold text-slate-700 mb-1">¿Desea incluir cobertura opcional de tripulante?</label>
+                        <Select
+                            options={opcionalOptions}
+                            value={opcionalOptions.find(o => o.value === con_opcional) ?? opcionalOptions[0]}
+                            onChange={(val) => setConOpcional(val?.value ?? false)}
+                            className="text-sm"
+                            classNamePrefix="react-select"
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
+                            styles={selectStyles(false)}
+                        />
                     </div>
                 </div>
             </div>

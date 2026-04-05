@@ -5,8 +5,15 @@ import { changePasswordSchema, type ChangePasswordFormData } from '../schemas/ch
 import { useChangePassword } from '../hooks/useChangePassword';
 import { useAuthStore } from '@/stores/auth';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
+
+const strengthLevels = [
+  { score: 1, label: 'Muy débil', color: 'bg-red-500' },
+  { score: 2, label: 'Débil', color: 'bg-orange-400' },
+  { score: 3, label: 'Aceptable', color: 'bg-yellow-500' },
+  { score: 4, label: 'Fuerte ✓', color: 'bg-green-500' },
+];
 
 export const ChangePasswordForm = () => {
   const navigate = useNavigate();
@@ -44,185 +51,158 @@ export const ChangePasswordForm = () => {
     });
   };
 
-  const passwordStrength = {
-    hasMinLength: newPassword?.length >= 8,
-    hasUpperCase: /[A-Z]/.test(newPassword || ''),
-    hasLowerCase: /[a-z]/.test(newPassword || ''),
-    hasNumber: /\d/.test(newPassword || ''),
-  };
+  const strengthScore = [
+    newPassword?.length >= 8,
+    /[A-Z]/.test(newPassword || ''),
+    /[a-z]/.test(newPassword || ''),
+    /\d/.test(newPassword || ''),
+  ].filter(Boolean).length;
 
-  const strengthScore = Object.values(passwordStrength).filter(Boolean).length;
+  const currentStrength = strengthLevels.find((l) => l.score === strengthScore);
 
   return (
     <div>
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-slate-500 hover:text-[#003366] mb-6 transition-colors font-medium"
+        className="flex items-center text-slate-400 hover:text-[#003366] mb-4 transition-colors text-sm"
       >
-        <ArrowLeft className="h-4 w-4 mr-2" />
+        <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
         Volver
       </button>
 
       {showSuccess && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
           <div>
-            <p className="font-medium text-green-900">¡Contraseña actualizada!</p>
-            <p className="text-sm text-green-700">Tu contraseña ha sido cambiada exitosamente.</p>
+            <p className="text-sm font-medium text-green-900">¡Contraseña actualizada exitosamente!</p>
           </div>
         </div>
       )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5 text-left">
-              Correo Electrónico
-            </label>
-            <input
-              id="email"
-              type="email"
-              {...register('Email')}
-              readOnly={!!user}
-              className={`w-full px-4 py-2 border rounded-md transition-all ${user
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Email */}
+        <div>
+          <label htmlFor="email" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+            Correo Electrónico
+          </label>
+          <input
+            id="email"
+            type="email"
+            {...register('Email')}
+            readOnly={!!user}
+            className={`w-full px-3 py-2 text-sm border rounded-md transition-all ${
+              user
                 ? 'bg-secondary text-muted-foreground cursor-not-allowed border-border'
                 : 'bg-white text-foreground border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none'
-                }`}
-            />
-          </div>
+            }`}
+          />
+        </div>
 
-          <div>
-            <label htmlFor="passwordOld" className="block text-sm font-medium text-slate-700 mb-1.5 text-left">
-              Contraseña Actual
-            </label>
-            <input
-              id="passwordOld"
-              type="password"
-              {...register('PasswordOld')}
-              placeholder="••••••••"
-              className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${errors.PasswordOld ? 'border-destructive' : 'border-input'
-                }`}
-              disabled={changePasswordMutation.isPending}
-            />
-            {errors.PasswordOld && (
-              <p className="mt-1.5 text-sm text-red-600">{errors.PasswordOld.message}</p>
-            )}
-          </div>
+        {/* Contraseña actual */}
+        <div>
+          <label htmlFor="passwordOld" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+            Contraseña Actual
+          </label>
+          <input
+            id="passwordOld"
+            type="password"
+            {...register('PasswordOld')}
+            placeholder="••••••••"
+            className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
+              errors.PasswordOld ? 'border-destructive' : 'border-input'
+            }`}
+            disabled={changePasswordMutation.isPending}
+          />
+          {errors.PasswordOld && (
+            <p className="mt-1 text-xs text-red-600">{errors.PasswordOld.message}</p>
+          )}
+        </div>
 
-          <div>
-            <label htmlFor="passwordNew" className="block text-sm font-medium text-slate-700 mb-1.5 text-left">
-              Nueva Contraseña
-            </label>
-            <input
-              id="passwordNew"
-              type="password"
-              {...register('PasswordNew')}
-              placeholder="••••••••"
-              className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${errors.PasswordNew ? 'border-destructive' : 'border-input'
-                }`}
-              disabled={changePasswordMutation.isPending}
-            />
-            {errors.PasswordNew && (
-              <p className="mt-1.5 text-sm text-red-600">{errors.PasswordNew.message}</p>
-            )}
+        {/* Nueva contraseña */}
+        <div>
+          <label htmlFor="passwordNew" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+            Nueva Contraseña
+          </label>
+          <input
+            id="passwordNew"
+            type="password"
+            {...register('PasswordNew')}
+            placeholder="••••••••"
+            className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
+              errors.PasswordNew ? 'border-destructive' : 'border-input'
+            }`}
+            disabled={changePasswordMutation.isPending}
+          />
+          {errors.PasswordNew && (
+            <p className="mt-1 text-xs text-red-600">{errors.PasswordNew.message}</p>
+          )}
 
-            {newPassword && (
-              <div className="mt-3 space-y-2">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4].map((level) => (
-                    <div
-                      key={level}
-                      className={`h-1.5 flex-1 rounded-full transition-colors ${level <= strengthScore
-                        ? strengthScore === 4
-                          ? 'bg-green-500'
-                          : strengthScore === 3
-                            ? 'bg-yellow-500'
-                            : 'bg-destructive'
+          {/* Barra de fortaleza compacta */}
+          {newPassword && (
+            <div className="mt-2">
+              <div className="flex gap-1 mb-1">
+                {[1, 2, 3, 4].map((level) => (
+                  <div
+                    key={level}
+                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                      level <= strengthScore
+                        ? (currentStrength?.color ?? 'bg-secondary')
                         : 'bg-secondary'
-                        }`}
-                    />
-                  ))}
-                </div>
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center gap-2">
-                    {passwordStrength.hasMinLength ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    ) : (
-                      <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                    <span className={passwordStrength.hasMinLength ? 'text-green-700' : 'text-muted-foreground'}>
-                      Mínimo 8 caracteres
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {passwordStrength.hasUpperCase ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    ) : (
-                      <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                    <span className={passwordStrength.hasUpperCase ? 'text-green-700' : 'text-muted-foreground'}>
-                      Una letra mayúscula
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {passwordStrength.hasLowerCase ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    ) : (
-                      <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                    <span className={passwordStrength.hasLowerCase ? 'text-green-700' : 'text-muted-foreground'}>
-                      Una letra minúscula
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {passwordStrength.hasNumber ? (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                    ) : (
-                      <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                    <span className={passwordStrength.hasNumber ? 'text-green-700' : 'text-muted-foreground'}>
-                      Un número
-                    </span>
-                  </div>
-                </div>
+                    }`}
+                  />
+                ))}
               </div>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="passwordConfirm" className="block text-sm font-medium text-slate-700 mb-1.5 text-left">
-              Confirmar Nueva Contraseña
-            </label>
-            <input
-              id="passwordConfirm"
-              type="password"
-              {...register('PasswordConfirm')}
-              placeholder="••••••••"
-              className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${errors.PasswordConfirm ? 'border-destructive' : 'border-input'
-                }`}
-              disabled={changePasswordMutation.isPending}
-            />
-            {errors.PasswordConfirm && (
-              <p className="mt-1.5 text-sm text-red-600">{errors.PasswordConfirm.message}</p>
-            )}
-          </div>
-
-          <div className="pt-4">
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={changePasswordMutation.isPending}
-            >
-              {changePasswordMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cambiando contraseña...
-                </>
-              ) : (
-                'Cambiar Contraseña'
+              {currentStrength && (
+                <p className={`text-xs font-medium ${
+                  strengthScore === 4 ? 'text-green-600'
+                  : strengthScore === 3 ? 'text-yellow-600'
+                  : 'text-red-500'
+                }`}>
+                  {currentStrength.label} — mín. 8 chars, mayúscula, minúscula y número
+                </p>
               )}
-            </Button>
-          </div>
-        </form>
+            </div>
+          )}
+        </div>
+
+        {/* Confirmar contraseña */}
+        <div>
+          <label htmlFor="passwordConfirm" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+            Confirmar Nueva Contraseña
+          </label>
+          <input
+            id="passwordConfirm"
+            type="password"
+            {...register('PasswordConfirm')}
+            placeholder="••••••••"
+            className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
+              errors.PasswordConfirm ? 'border-destructive' : 'border-input'
+            }`}
+            disabled={changePasswordMutation.isPending}
+          />
+          {errors.PasswordConfirm && (
+            <p className="mt-1 text-xs text-red-600">{errors.PasswordConfirm.message}</p>
+          )}
+        </div>
+
+        {/* Botón submit */}
+        <div className="pt-2">
+          <Button
+            type="submit"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2.5 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={changePasswordMutation.isPending}
+          >
+            {changePasswordMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Cambiando contraseña...
+              </>
+            ) : (
+              'Cambiar Contraseña'
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };

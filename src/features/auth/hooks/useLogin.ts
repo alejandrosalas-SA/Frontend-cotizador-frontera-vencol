@@ -12,6 +12,7 @@ export const useLogin = () => {
         mutationFn: (credentials: LoginCredentials) => {
             return loginApi(credentials);
         },
+        throwOnError: false,
         onSuccess: (data) => {
             // Guardar usuario y token en el store
             login(data.user, data.token);

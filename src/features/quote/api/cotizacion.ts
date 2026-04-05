@@ -13,11 +13,13 @@ export interface CotizacionResponse {
 
 export const calcularCotizacion = async (
     vehiculo: Vehiculo,
-    nro_version?: string
+    nro_version?: string,
+    con_opcional?: boolean
 ): Promise<CotizacionResponse> => {
     const res = await api.post('/Cotizacion/calcular', {
         ...vehiculo,
-        nro_version_buscada: nro_version
+        nro_version_buscada: nro_version,
+        con_opcional: con_opcional ? 1 : 0
     });
     return res.data;
 };

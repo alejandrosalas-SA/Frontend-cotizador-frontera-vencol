@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, ListFilter, ClipboardCheck, Clock, FileText, ChevronRight } from 'lucide-react';
-import { useSolicitudesList } from '@/features/quote/hooks/useSolicitudes';
+import { PlusCircle, ListFilter, ClipboardCheck, Clock, FileText, ChevronRight, BarChart2 } from 'lucide-react';
+import { useConteosSolicitudes } from '@/features/quote/hooks/useSolicitudes';
+import { useMiniPanel } from '@/features/admin/hooks/useMiniPanel';
+import { TopVehiculosChart } from '@/features/admin/components/charts/TopVehiculosChart';
+import { RendimientoSucursalChart } from '@/features/admin/components/charts/RendimientoSucursalChart';
+import { useAuthStore } from '@/stores/auth';
 import transportationImg from '@/assets/imagen-principal-cotizacion-transporte-binacional.png';
 import truckVideo from '@/assets/Animación_de_Camión_en_Vía.mp4';
 import { Button } from '@/components/ui/button';
@@ -9,14 +13,17 @@ import { cn } from '@/lib/utils';
 
 export const DashboardRoute = () => {
   const navigate = useNavigate();
-  const { data: solicitudes } = useSolicitudesList();
+  const { data: conteos } = useConteosSolicitudes();
+  const { data: miniPanel, isLoading: loadingPanel } = useMiniPanel();
+  const { user } = useAuthStore();
+  const puedeVerEstadisticas = user?.id_rol === 1 || user?.id_rol === 2;
   const [isHovered, setIsHovered] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
 
   const stats = {
-    total: solicitudes?.length || 0,
-    generadas: solicitudes?.filter(s => s.status === 1).length || 0,
-    borradores: solicitudes?.filter(s => s.status === 0).length || 0,
+    total:      conteos?.total      ?? 0,
+    generadas:  conteos?.generadas  ?? 0,
+    borradores: conteos?.borradores ?? 0,
   };
 
   return (
@@ -137,26 +144,53 @@ export const DashboardRoute = () => {
         ))}
       </section>
 
-      {/* Recent Activity Placeholder / Power BI Placeholder */}
-      <section className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden min-h-[400px] flex flex-col group transition-all hover:border-blue-100">
+      {/* Mini Panel de Estadísticas */}
+      <section className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden flex flex-col group transition-all hover:border-blue-100">
         <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-slate-800">Panel de Estadísticas Avanzadas</h3>
-            <p className="text-sm text-slate-500 mt-1">Monitoreo de actividad binacional en tiempo real</p>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+              <BarChart2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-800">Mini Panel de Estadísticas</h3>
+              <p className="text-sm text-slate-500 mt-0.5">Resumen de actividad binacional</p>
+            </div>
           </div>
-          <Button variant="ghost" className="text-blue-600 hover:bg-blue-50 font-semibold" onClick={() => navigate('/app/solicitudes')}>
-            Ver Detalles
-            <ChevronRight className="ml-1 w-4 h-4" />
-          </Button>
+          {puedeVerEstadisticas && (
+            <Button variant="ghost" className="text-blue-600 hover:bg-blue-50 font-semibold" onClick={() => navigate('/app/estadisticas')}>
+              Ver Panel Completo
+              <ChevronRight className="ml-1 w-4 h-4" />
+            </Button>
+          )}
         </div>
-        <div className="flex-1 bg-slate-50/50 flex flex-col items-center justify-center p-12 text-center space-y-4">
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
-            <div className="w-10 h-10 bg-blue-200 rounded-full" />
+
+        {loadingPanel ? (
+          <div className="flex items-center justify-center p-16">
+            <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
           </div>
-          <p className="text-slate-400 font-medium max-w-sm">
-            Integración automática con Power BI para reporte de cotizaciones y flujo de carga.
-          </p>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+            {/* Top 10 Vehículos */}
+            <div className="p-6">
+              <h4 className="text-sm font-semibold text-slate-600 mb-4 uppercase tracking-wide">Top 10 Vehículos Cotizados</h4>
+              {miniPanel && miniPanel.top_vehiculos.length > 0 ? (
+                <TopVehiculosChart data={miniPanel.top_vehiculos} />
+              ) : (
+                <div className="flex items-center justify-center h-[320px] text-slate-400 text-sm">Sin datos disponibles</div>
+              )}
+            </div>
+
+            {/* Rendimiento por Sucursal */}
+            <div className="p-6">
+              <h4 className="text-sm font-semibold text-slate-600 mb-4 uppercase tracking-wide">Rendimiento por Sucursal</h4>
+              {miniPanel && miniPanel.rendimiento_sucursales.length > 0 ? (
+                <RendimientoSucursalChart data={miniPanel.rendimiento_sucursales} />
+              ) : (
+                <div className="flex items-center justify-center h-[280px] text-slate-400 text-sm">Sin datos disponibles</div>
+              )}
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

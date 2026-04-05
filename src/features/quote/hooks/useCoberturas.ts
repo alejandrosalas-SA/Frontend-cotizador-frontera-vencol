@@ -30,7 +30,7 @@ export const useCotizacionOpcional = (payload: any) => {
 
 export const useCalcularCotizacionMutation = () => {
     return useMutation({
-        mutationFn: ({ vehiculo, nro_version }: { vehiculo: any, nro_version?: string }) =>
-            calcularCotizacion(vehiculo, nro_version),
+        mutationFn: ({ vehiculo, nro_version, con_opcional }: { vehiculo: any, nro_version?: string, con_opcional?: boolean }) =>
+            calcularCotizacion(vehiculo, nro_version, con_opcional),
     });
 };

@@ -14,7 +14,7 @@ export const QuoteWizard = () => {
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
 
-  const { step, setStep, data, setAllData, reset, setCotizacionFinal, updateData } = useQuoteStore();
+  const { step, setStep, data, setAllData, reset, setCotizacionFinal, updateData, setConOpcional } = useQuoteStore();
   const [successId, setSuccessId] = useState<number | null>(null);
   const { error: toastError, success: toastSuccess } = useToast();
 
@@ -66,6 +66,8 @@ export const QuoteWizard = () => {
         observaciones: detalle.observaciones,
         // nro_version NO se copia — el cálculo usará la tarifa activa
       });
+      // Inferir si el borrador tenía cobertura opcional por la existencia de registros
+      setConOpcional((detalle.opcionales?.length ?? 0) > 0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing, detalle?.id]);
@@ -106,41 +108,43 @@ export const QuoteWizard = () => {
       isStepValid = await applicantFormRef.current.submitForm();
     } else if (step === 2 && vehicleFormRef.current) {
       isStepValid = await vehicleFormRef.current.submitForm();
-      
+
       if (isStepValid) {
-         // Validar que la cotizacion sea mayor a cero
-         try {
-             // El submitForm guardó los datos en el store global de forma sincrónica
-             const currentData = useQuoteStore.getState().data;
-             if (currentData.vehiculo) {
-                 // IMPORTANTE: NO enviar nro_version → el SP usará la tarifa activa vigente
-                 const res = await calcularCotizacion({
-                     vehiculo: currentData.vehiculo
-                 });
+        // Validar que la cotizacion sea mayor a cero
+        try {
+          // El submitForm guardó los datos en el store global de forma sincrónica
+          const storeState = useQuoteStore.getState();
+          const currentData = storeState.data;
+          if (currentData.vehiculo) {
+            // IMPORTANTE: NO enviar nro_version → el SP usará la tarifa activa vigente
+            const res = await calcularCotizacion({
+              vehiculo: currentData.vehiculo,
+              con_opcional: storeState.con_opcional
+            });
 
-                 if (!res.prima_total || res.prima_total <= 0) {
-                     toastError("Las características de este vehículo no aplican para la póliza (Primas = $0.00)");
-                     isStepValid = false;
-                 } else {
-                     setCotizacionFinal(res);
-                     updateData('nro_version', res.nro_version);
+            if (!res.prima_total || res.prima_total <= 0) {
+              toastError("Las características de este vehículo no aplican para la póliza (Primas = $0.00)");
+              isStepValid = false;
+            } else {
+              setCotizacionFinal(res);
+              updateData('nro_version', res.nro_version);
 
-                     const coberturas = [
-                         { id_cobertura: 1, nombre: 'BASICA', prima: res.prima_basica, valor_asegurado: 0 },
-                         { id_cobertura: 2, nombre: 'EXCESO', prima: res.prima_exceso, valor_asegurado: 0 }
-                     ];
-                     const opcionales = [
-                         { id_cobertura: 3, nombre: 'OPCIONAL', prima_gasto: res.prima_gastos_medicos, prima_invalidez: res.prima_invalidez, prima_muerte: res.prima_muerte_accidental }
-                     ];
+              const coberturas = [
+                { id_cobertura: 1, nombre: 'BASICA', prima: res.prima_basica, valor_asegurado: 0 },
+                { id_cobertura: 2, nombre: 'EXCESO', prima: res.prima_exceso, valor_asegurado: 0 }
+              ];
+              const opcionales = storeState.con_opcional
+                ? [{ id_cobertura: 3, nombre: 'OPCIONAL', prima_gasto: res.prima_gastos_medicos, prima_invalidez: res.prima_invalidez, prima_muerte: res.prima_muerte_accidental }]
+                : [];
 
-                     updateData('coberturas', coberturas as any);
-                     updateData('opcionales', opcionales as any);
-                 }
-             }
-         } catch (error) {
-             toastError("Ocurrió un error al calcular la pre-cotización del vehículo.");
-             isStepValid = false;
-         }
+              updateData('coberturas', coberturas as any);
+              updateData('opcionales', opcionales as any);
+            }
+          }
+        } catch (error) {
+          toastError("Ocurrió un error al calcular la pre-cotización del vehículo.");
+          isStepValid = false;
+        }
       }
     } else if (step === 3) {
       isStepValid = true; // Paso 3 es informativo (coberturas)
@@ -244,7 +248,7 @@ export const QuoteWizard = () => {
       {/* Encabezado Estilo Excel */}
       <div className="flex justify-between items-start mb-6 border-b-2 border-[#003366] pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#cc0000]">BORRADOR</h1>
+
           <p className="text-xs font-semibold text-slate-600">
             RESPONSABILIDAD CIVIL PARA EL TRANSPORTADOR POR CARRETERA EN VIAJE INTERNACIONAL ENTRE LA REPÚBLICA DE COLOMBIA Y LA REPÚBLICA BOLIVARIANA DE VENEZUELA
           </p>
@@ -294,7 +298,7 @@ export const QuoteWizard = () => {
             <button
               onClick={() => {
                 if (step === 2 && vehicleFormRef.current?.savePartial) {
-                    vehicleFormRef.current.savePartial();
+                  vehicleFormRef.current.savePartial();
                 }
                 setStep(Math.max(1, step - 1));
               }}

@@ -85,3 +85,8 @@ export const getSumasAseguradas = async (tipoExceso?: number | null): Promise<Su
     const res = await api.get(url);
     return res.data;
 };
+
+export const getVersionActual = async (): Promise<{ nro_version: string } | null> => {
+    const res = await api.get('/maestros/VersionActual');
+    return res.data;
+};

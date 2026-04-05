@@ -3,7 +3,7 @@ import { useQuoteStore } from '../store/quoteStore';
 import { useSumasAseguradas } from '../hooks/useMaestros';
 
 export const CoverageForm = () => {
-    const { data, updateData, cotizacionFinal } = useQuoteStore();
+    const { data, updateData, cotizacionFinal, con_opcional } = useQuoteStore();
     const vehiculo = data.vehiculo;
     const { data: sumasAseguradas, isLoading: isLoadingSumas } = useSumasAseguradas(vehiculo?.tipo_exceso);
 
@@ -86,8 +86,8 @@ export const CoverageForm = () => {
                     <div className="grid grid-cols-2">
                         <div className="p-1 border-r border-slate-300 text-xs">(DP)</div>
                         <div className="p-1 text-right font-mono text-xs">{formatCurrency(getSuma('basico', 6))}</div>
-                        <div className="p-1 border-t border-r border-slate-300 text-xs">(DM)</div>
-                        <div className="p-1 border-t text-right font-mono text-xs">{formatCurrency(getSuma('basico', 7))}</div>
+                        <div className="p-1 border-t border-r border-b border-slate-300 text-xs">(DM)</div>
+                        <div className="p-1 border-t border-b text-right font-mono text-xs border-slate-300">{formatCurrency(getSuma('basico', 7))}</div>
                     </div>
                 </div>
             </div>
@@ -116,32 +116,34 @@ export const CoverageForm = () => {
                     <div className="grid grid-cols-2">
                         <div className="p-1 border-r border-slate-300 text-xs">(DP)</div>
                         <div className="p-1 text-right font-mono text-xs">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 6)) : '-'}</div>
-                        <div className="p-1 border-t border-r border-slate-300 text-xs">(DM)</div>
-                        <div className="p-1 border-t text-right font-mono text-xs">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 7)) : '-'}</div>
+                        <div className="p-1 border-t border-r border-b border-slate-300 text-xs">(DM)</div>
+                        <div className="p-1 border-t border-b text-right font-mono text-xs">{vehiculo?.tipo_exceso ? formatCurrency(getSuma('exceso', 7)) : '-'}</div>
                     </div>
                 </div>
             </div>
 
-            <div>
-                <TableHeader title="Cobertura Opcional (Tripulante)" />
-                <div className="grid grid-cols-3 bg-white">
-                    <div className="p-2 border border-slate-300 text-xs font-bold text-center bg-blue-50">Cobertura</div>
-                    <div className="p-2 border border-slate-300 text-xs font-bold text-center bg-blue-50">Suma Asegurada</div>
-                    <div className="p-2 border border-slate-300 text-xs font-bold text-center bg-blue-50">Prima</div>
+            {con_opcional && (
+                <div>
+                    <TableHeader title="Cobertura Opcional (Tripulante)" />
+                    <div className="grid grid-cols-3 bg-white">
+                        <div className="p-2 border border-slate-300 text-xs font-bold text-center bg-blue-50">Cobertura</div>
+                        <div className="p-2 border border-slate-300 text-xs font-bold text-center bg-blue-50">Suma Asegurada</div>
+                        <div className="p-2 border border-slate-300 text-xs font-bold text-center bg-blue-50">Prima</div>
 
-                    <LabelCell>Gastos Médicos, Quirúrgicos, Farmacéuticos y Hospitalarios</LabelCell>
-                    <Cell className="text-right font-mono">{formatCurrency(getSuma('opcional', 8))}</Cell>
-                    <Cell className="text-right font-mono">{formatCurrency(cotizacionFinal?.prima_gastos_medicos)}</Cell>
+                        <LabelCell>Gastos Médicos, Quirúrgicos, Farmacéuticos y Hospitalarios</LabelCell>
+                        <Cell className="text-right font-mono">{formatCurrency(getSuma('opcional', 8))}</Cell>
+                        <Cell className="text-right font-mono">{formatCurrency(cotizacionFinal?.prima_gastos_medicos)}</Cell>
 
-                    <LabelCell>Invalidez Total y Permanente</LabelCell>
-                    <Cell className="text-right font-mono">{formatCurrency(getSuma('opcional', 9))}</Cell>
-                    <Cell className="text-right font-mono">{formatCurrency(cotizacionFinal?.prima_invalidez)}</Cell>
+                        <LabelCell>Invalidez Total y Permanente</LabelCell>
+                        <Cell className="text-right font-mono">{formatCurrency(getSuma('opcional', 9))}</Cell>
+                        <Cell className="text-right font-mono">{formatCurrency(cotizacionFinal?.prima_invalidez)}</Cell>
 
-                    <LabelCell>Muerte Accidental</LabelCell>
-                    <Cell className="text-right font-mono">{formatCurrency(getSuma('opcional', 10))}</Cell>
-                    <Cell className="text-right font-mono">{formatCurrency(cotizacionFinal?.prima_muerte_accidental)}</Cell>
+                        <LabelCell>Muerte Accidental</LabelCell>
+                        <Cell className="text-right font-mono">{formatCurrency(getSuma('opcional', 10))}</Cell>
+                        <Cell className="text-right font-mono">{formatCurrency(cotizacionFinal?.prima_muerte_accidental)}</Cell>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="flex justify-between items-center bg-[#003366] text-white p-4 font-bold mt-8">
                 <span>Total Prima a Pagar</span>

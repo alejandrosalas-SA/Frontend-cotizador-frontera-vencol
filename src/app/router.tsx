@@ -8,6 +8,7 @@ import { CreatePasswordRoute } from './routes/auth/create-password';
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
 import { SolicitudesRoute } from './routes/app/solicitudes';
 import { PrimasRoute } from './routes/app/primas';
+import { EstadisticasRoute } from './routes/app/estadisticas';
 
 export const createAppRouter = () =>
   createBrowserRouter([
@@ -62,12 +63,24 @@ export const createAppRouter = () =>
             </ProtectedRoute>
           ),
         },
+        {
+          path: 'estadisticas',
+          element: (
+            <ProtectedRoute requiredRole={1}>
+              <EstadisticasRoute />
+            </ProtectedRoute>
+          ),
+        },
       ],
     },
 
     // 3. Redirección raíz
     {
+      path: '/',
+      element: <Navigate to="/auth/login" replace />,
+    },
+    {
       path: '*',
-      element: <Navigate to="/app/dashboard" replace />,
+      element: <Navigate to="/auth/login" replace />,
     },
   ]);

@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Trash2, FileText, Search, CalendarIcon, X, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Trash2, FileText, Search, CalendarIcon, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { SolicitudListItem } from '@/types';
 import { useSolicitudesList, useEliminarSolicitud } from '../../quote/hooks/useSolicitudes';
@@ -13,6 +13,21 @@ import { Button } from "@/components/ui/button";
 import { format, parse, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+
+const DEBOUNCE_MS = 400;
+
+function useDebounce(value: string, delay: number = DEBOUNCE_MS): string {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setDebouncedValue(value), delay);
+        return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    }, [value, delay]);
+
+    return debouncedValue;
+}
 
 const parseDate = (str: string) => {
     const parsed = parse(str, 'dd/MM/yyyy', new Date());
@@ -70,14 +85,102 @@ const ConfirmDialog = ({
     );
 };
 
+interface PaginacionProps {
+    paginaActual: number;
+    totalPaginas: number;
+    totalRegistros: number;
+    tamanoPagina: number;
+    onCambiarPagina: (pagina: number) => void;
+    isFetching: boolean;
+}
+
+const Paginacion = ({
+    paginaActual,
+    totalPaginas,
+    totalRegistros,
+    tamanoPagina,
+    onCambiarPagina,
+    isFetching,
+}: PaginacionProps) => {
+    const getPageNumbers = (): number[] => {
+        const VISIBLE = 5;
+        let start = Math.max(1, paginaActual - Math.floor(VISIBLE / 2));
+        const end = Math.min(totalPaginas, start + VISIBLE - 1);
+        start = Math.max(1, end - VISIBLE + 1);
+        const pages: number[] = [];
+        for (let i = start; i <= end; i++) pages.push(i);
+        return pages;
+    };
+
+    const primerRegistro = (paginaActual - 1) * tamanoPagina + 1;
+    const ultimoRegistro = Math.min(paginaActual * tamanoPagina, totalRegistros);
+
+    return (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-200 bg-white rounded-b-xl">
+            <p className="text-xs text-slate-500">
+                Mostrando{' '}
+                <span className="font-semibold text-slate-700">{primerRegistro}–{ultimoRegistro}</span>
+                {' '}de{' '}
+                <span className="font-semibold text-slate-700">{totalRegistros}</span> solicitudes
+            </p>
+
+            <div className="flex items-center gap-1">
+                <Button
+                    variant="outline" size="sm"
+                    onClick={() => onCambiarPagina(paginaActual - 1)}
+                    disabled={paginaActual <= 1 || isFetching}
+                    className="h-8 w-8 p-0 border-slate-200"
+                    aria-label="Página anterior"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                </Button>
+
+                {getPageNumbers().map((page) => (
+                    <Button
+                        key={page}
+                        variant={page === paginaActual ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => onCambiarPagina(page)}
+                        disabled={isFetching}
+                        className={cn(
+                            'h-8 w-8 p-0 text-xs',
+                            page === paginaActual
+                                ? 'bg-[#003366] hover:bg-[#002244] border-[#003366] text-white'
+                                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                        )}
+                        aria-label={`Ir a página ${page}`}
+                        aria-current={page === paginaActual ? 'page' : undefined}
+                    >
+                        {page}
+                    </Button>
+                ))}
+
+                <Button
+                    variant="outline" size="sm"
+                    onClick={() => onCambiarPagina(paginaActual + 1)}
+                    disabled={paginaActual >= totalPaginas || isFetching}
+                    className="h-8 w-8 p-0 border-slate-200"
+                    aria-label="Página siguiente"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                </Button>
+            </div>
+
+            <p className="text-xs text-slate-500 hidden sm:block">
+                Página <span className="font-semibold text-slate-700">{paginaActual}</span> de{' '}
+                <span className="font-semibold text-slate-700">{totalPaginas}</span>
+            </p>
+        </div>
+    );
+};
+
 export const SolicitudesList = ({ onVerDetalle }: Props) => {
-    const { data: solicitudes, isLoading, isError, refetch, isFetching } = useSolicitudesList();
+    const { data: response, isLoading, isError, refetch, isFetching } = useSolicitudesList();
     const { mutate: eliminar, isPending: isDeleting } = useEliminarSolicitud();
     const { success: toastSuccess, error: toastError } = useToast();
     const [confirmId, setConfirmId] = useState<number | null>(null);
     const navigate = useNavigate();
 
-    // Filter Store
     const {
         searchApplicant,
         searchVehicle,
@@ -85,6 +188,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
         dateRange,
         fromInput,
         toInput,
+        paginaActual,
         setSearchApplicant,
         setSearchVehicle,
         setStatusFilter,
@@ -92,8 +196,25 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
         setFromInput,
         setToInput,
         setRangeOnly,
-        resetFilters
+        setPaginaActual,
+        resetFilters,
     } = useSolicitudesStore();
+
+    // Estado local para inputs de texto — el store se actualiza después del debounce
+    const [applicantInput, setApplicantInput] = useState(searchApplicant);
+    const [vehicleInput, setVehicleInput] = useState(searchVehicle);
+
+    const debouncedApplicant = useDebounce(applicantInput);
+    const debouncedVehicle   = useDebounce(vehicleInput);
+
+    useEffect(() => { setSearchApplicant(debouncedApplicant); }, [debouncedApplicant, setSearchApplicant]);
+    useEffect(() => { setSearchVehicle(debouncedVehicle);     }, [debouncedVehicle,   setSearchVehicle]);
+
+    const handleResetFilters = () => {
+        setApplicantInput('');
+        setVehicleInput('');
+        resetFilters();
+    };
 
     const isFiltered = searchApplicant || searchVehicle || statusFilter !== 'all' || dateRange;
 
@@ -118,53 +239,13 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
             const parsed = parseDate(val);
             if (parsed && dateRange?.from) {
                 if (parsed >= dateRange.from) {
-                    setRangeOnly({ ...dateRange, from: dateRange?.from, to: parsed });
+                    setRangeOnly({ ...dateRange, from: dateRange.from, to: parsed });
                 }
             }
         } else if (val === '') {
             setRangeOnly({ ...dateRange, from: dateRange?.from, to: undefined });
         }
     };
-
-    const filteredSolicitudes = useMemo(() => {
-        if (!solicitudes) return [];
-
-        return solicitudes.filter(s => {
-            // Apply Applicant Search
-            const matchesApplicant = !searchApplicant ||
-                s.solicitante_nombre?.toLowerCase().includes(searchApplicant.toLowerCase()) ||
-                s.solicitante_email?.toLowerCase().includes(searchApplicant.toLowerCase());
-
-            // Apply Vehicle Search
-            const matchesVehicle = !searchVehicle ||
-                s.vehiculo_placa?.toLowerCase().includes(searchVehicle.toLowerCase()) ||
-                s.vehiculo_marca?.toLowerCase().includes(searchVehicle.toLowerCase()) ||
-                s.vehiculo_modelo?.toLowerCase().includes(searchVehicle.toLowerCase());
-
-            // Apply Status Filter
-            const matchesStatus = statusFilter === 'all' || s.status.toString() === statusFilter;
-
-            // Apply Date Range Filter
-            let matchesDate = true;
-            if (dateRange?.from) {
-                const solicitudDate = new Date(s.fecha_emision);
-                solicitudDate.setHours(0, 0, 0, 0);
-
-                const fromDate = new Date(dateRange.from);
-                fromDate.setHours(0, 0, 0, 0);
-
-                if (dateRange.to) {
-                    const toDate = new Date(dateRange.to);
-                    toDate.setHours(23, 59, 59, 999);
-                    matchesDate = solicitudDate >= fromDate && solicitudDate <= toDate;
-                } else {
-                    matchesDate = solicitudDate.getTime() === fromDate.getTime();
-                }
-            }
-
-            return matchesApplicant && matchesVehicle && matchesStatus && matchesDate;
-        });
-    }, [solicitudes, searchApplicant, searchVehicle, statusFilter, dateRange]);
 
     const handleEliminar = () => {
         if (!confirmId) return;
@@ -173,10 +254,14 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                 toastSuccess('Solicitud eliminada correctamente');
                 setConfirmId(null);
             },
-            onError: (err: any) => {
-                toastError(err?.response?.data?.message || 'Error al eliminar la solicitud');
+            onError: (err: unknown) => {
+                const message =
+                    err instanceof Error
+                        ? err.message
+                        : (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                toastError(message || 'Error al eliminar la solicitud');
                 setConfirmId(null);
-            }
+            },
         });
     };
 
@@ -187,6 +272,22 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
             onVerDetalle(s.id);
         }
     };
+
+    const solicitudes = response?.data ?? [];
+    const meta        = response?.meta;
+
+    // Muestra la barra de paginación completa (con controles de navegación) sólo cuando hay
+    // más de una página y no hay filtros activos en el servidor.
+    const showPaginationControls = meta && !meta.tiene_filtros && meta.total_paginas > 1;
+
+    // Muestra al menos el resumen "Mostrando X de X" cuando hay datos en una sola página.
+    // Esto confirma al usuario que el sistema de paginación está activo y el conteo es correcto.
+    const showPaginationSummary = meta && !meta.tiene_filtros && meta.total_paginas === 1 && meta.total_registros > 0;
+
+    // Cualquiera de los dos casos ocupa el footer de la tabla, lo que afecta el border-radius.
+    const hasPaginationFooter = showPaginationControls || showPaginationSummary;
+
+    // --- Guards de estado ---
 
     if (isLoading) {
         return (
@@ -209,7 +310,11 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
         );
     }
 
-    if (!solicitudes?.length) {
+    // Empty state: sólo se muestra cuando la carga terminó sin error, el backend
+    // confirma que no hay registros en absoluto (total_registros === 0) Y no hay
+    // filtros activos. Si hay filtros activos y el resultado es vacío, se deja que
+    // la tabla muestre el mensaje interno con el botón "Limpiar todos los filtros".
+    if (!isLoading && !isError && meta?.total_registros === 0 && !isFiltered) {
         return (
             <div className="text-center py-16 text-slate-400">
                 <FileText className="w-14 h-14 mx-auto mb-4 opacity-40" />
@@ -227,6 +332,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                 onCancel={() => setConfirmId(null)}
                 loading={isDeleting}
             />
+
             <div className="mb-6 space-y-4">
                 <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     {/* Applicant Search */}
@@ -234,8 +340,8 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                             placeholder="Buscar solicitante..."
-                            value={searchApplicant}
-                            onChange={(e) => setSearchApplicant(e.target.value)}
+                            value={applicantInput}
+                            onChange={(e) => setApplicantInput(e.target.value)}
                             className="pl-9 bg-slate-50/50 border-slate-200"
                         />
                     </div>
@@ -245,8 +351,8 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                             placeholder="Marca, modelo o placa..."
-                            value={searchVehicle}
-                            onChange={(e) => setSearchVehicle(e.target.value)}
+                            value={vehicleInput}
+                            onChange={(e) => setVehicleInput(e.target.value)}
                             className="pl-9 bg-slate-50/50 border-slate-200"
                         />
                     </div>
@@ -332,7 +438,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                     {isFiltered && (
                         <Button
                             variant="ghost"
-                            onClick={resetFilters}
+                            onClick={handleResetFilters}
                             className="text-slate-500 hover:text-slate-800"
                         >
                             <X className="w-4 h-4 mr-2" />
@@ -357,7 +463,10 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-lg bg-white">
+            <div className={cn(
+                "overflow-x-auto border border-slate-200 rounded-xl shadow-lg bg-white transition-opacity duration-200",
+                isFetching && "opacity-60"
+            )}>
                 <table className="w-full text-sm text-left border-collapse">
                     <thead>
                         <tr className="bg-[#003366] text-white">
@@ -367,11 +476,11 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                             <th className="px-4 py-3 font-semibold">Versión</th>
                             <th className="px-4 py-3 font-semibold">Fecha</th>
                             <th className="px-4 py-3 font-semibold text-center">Estado</th>
-                            <th className="px-4 py-3 font-semibold text-center rounded-tr-xl">Acciones</th>
+                            <th className={cn("px-4 py-3 font-semibold text-center", !hasPaginationFooter && "rounded-tr-xl")}>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredSolicitudes.length === 0 ? (
+                        {solicitudes.length === 0 ? (
                             <tr>
                                 <td colSpan={7} className="px-4 py-16 text-center text-slate-400">
                                     <div className="flex flex-col items-center gap-2">
@@ -379,7 +488,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                                         <p className="font-medium">No se encontraron solicitudes que coincidan con los filtros</p>
                                         {isFiltered && (
                                             <button
-                                                onClick={resetFilters}
+                                                onClick={handleResetFilters}
                                                 className="text-xs text-blue-600 hover:underline mt-1"
                                             >
                                                 Limpiar todos los filtros
@@ -389,7 +498,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                                 </td>
                             </tr>
                         ) : (
-                            filteredSolicitudes.map((s: SolicitudListItem, idx: number) => (
+                            solicitudes.map((s: SolicitudListItem, idx: number) => (
                                 <tr
                                     key={s.id}
                                     className={`border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}
@@ -413,13 +522,6 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                                     </td>
                                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center justify-center gap-2">
-                                            {/* <button
-                                                title={s.status === 0 ? "Editar borrador" : "Ver detalle"}
-                                                onClick={() => handleRowClick(s)}
-                                                className="p-1.5 text-[#003366] hover:bg-blue-100 rounded transition-colors"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button> */}
                                             <button
                                                 title="Eliminar solicitud"
                                                 onClick={() => setConfirmId(s.id)}
@@ -430,9 +532,34 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
                                         </div>
                                     </td>
                                 </tr>
-                            )))}
+                            ))
+                        )}
                     </tbody>
                 </table>
+
+                {/* Paginación completa: controles de navegación + resumen, cuando hay más de 1 página */}
+                {showPaginationControls && (
+                    <Paginacion
+                        paginaActual={paginaActual}
+                        totalPaginas={meta.total_paginas}
+                        totalRegistros={meta.total_registros}
+                        tamanoPagina={meta.tamano_pagina}
+                        onCambiarPagina={setPaginaActual}
+                        isFetching={isFetching}
+                    />
+                )}
+
+                {/* Resumen sin controles: cuando todos los registros caben en una sola página */}
+                {showPaginationSummary && (
+                    <div className="px-4 py-3 border-t border-slate-200 bg-white rounded-b-xl">
+                        <p className="text-xs text-slate-500">
+                            Mostrando{' '}
+                            <span className="font-semibold text-slate-700">{meta.total_registros}</span>
+                            {' '}de{' '}
+                            <span className="font-semibold text-slate-700">{meta.total_registros}</span> solicitudes
+                        </p>
+                    </div>
+                )}
             </div>
         </>
     );

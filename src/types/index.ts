@@ -60,8 +60,6 @@ export interface SolicitudListItem {
   status: number;
   fecha_emision: string;
   nro_version: string;
-  condiciones?: string;
-  observaciones?: string;
   solicitante_nombre: string;
   solicitante_email: string;
   tipo_persona: string;
@@ -69,6 +67,20 @@ export interface SolicitudListItem {
   vehiculo_marca: string;
   vehiculo_modelo: string;
   vehiculo_anho: number;
+}
+
+export interface PaginacionMeta {
+  total_registros: number;
+  pagina_actual: number;
+  tamano_pagina: number;
+  total_paginas: number;
+  /** El SP devuelve 1 o 0; se normaliza a boolean en la capa API */
+  tiene_filtros: boolean;
+}
+
+export interface SolicitudesResponse {
+  data: SolicitudListItem[];
+  meta: PaginacionMeta;
 }
 
 export interface CoberturaDB {
@@ -136,6 +148,21 @@ export interface UpdateSolicitudPayload {
   opcionales?: Cobertura[];
 }
 
+// --- Admin: Tasas Opcionales ---
+export interface TasaOpcional {
+  id: number;
+  id_def_termino: number;
+  nombre_cobertura: string;
+  etiqueta: string;
+  tasa: number;
+  id_usuario: string | null;
+  fe_us_in: string | null;
+}
+
+export interface UpdateTasaOpcionalPayload {
+  tasa: number;
+}
+
 // --- Admin: Primas y Sumas Aseguradas ---
 export interface Tarifa {
   id: number;
@@ -176,4 +203,47 @@ export interface DefinicionTermino {
   id: number;
   nombre: string;
   etiqueta: string;
+}
+
+// --- Estadísticas Dashboard ---
+export interface KpiEstadisticas {
+  ingresos_mes_actual: number;
+  ingresos_mes_anterior: number;
+  porcentaje_crecimiento: number;
+  total_borradores: number;
+  total_emitidas: number;
+  tasa_conversion: number;
+  ticket_promedio: number;
+}
+export interface TopVehiculo {
+  marca_modelo: string;
+  cantidad_cotizaciones: number;
+}
+export interface DistribucionTransporte {
+  tipo_transporte_nombre: string;
+  cantidad: number;
+  porcentaje: number;
+}
+export interface RendimientoSucursal {
+  sucursal: string;
+  borradores: number;
+  solicitudes_generadas: number;
+}
+export interface RendimientoEmpleado {
+  nombre_completo: string;
+  total_generadas: number;
+  total_borradores: number;
+  total_procesadas: number;
+  tasa_cierre: number;
+}
+export interface DashboardEstadisticas {
+  kpis: KpiEstadisticas;
+  top_vehiculos: TopVehiculo[];
+  distribucion_transporte: DistribucionTransporte[];
+  rendimiento_sucursales: RendimientoSucursal[];
+  rendimiento_empleados: RendimientoEmpleado[];
+}
+export interface MiniPanelEstadisticas {
+  top_vehiculos: TopVehiculo[];
+  rendimiento_sucursales: RendimientoSucursal[];
 }

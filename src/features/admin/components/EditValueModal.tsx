@@ -70,8 +70,8 @@ export const EditValueModal = ({
             <Label htmlFor="edit-value">{label}</Label>
             <Input
               id="edit-value"
-              type="decimal"
-              step="1.000"
+              type="number"
+              step="any"
               min="0"
               placeholder="0"
               {...register('value', { valueAsNumber: true })}

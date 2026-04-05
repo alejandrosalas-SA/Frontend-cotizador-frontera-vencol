@@ -9,28 +9,29 @@ const api = axios.create({
 // Interceptor de Request: Inyectar Token en cada petición
 api.interceptors.request.use(
   (config) => {
-    const { getToken, isTokenValid } = useAuthStore.getState();
+    const { getToken, isTokenValid, isAuthenticated, logout } = useAuthStore.getState();
 
-    // Verificar si el token es válido antes de usarlo
+    if (!isAuthenticated) {
+      // Usuario no autenticado (ej. pantalla de login): no agregar header,
+      // dejar que la petición continúe normalmente.
+      return config;
+    }
+
     if (isTokenValid()) {
       const token = getToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     } else {
-      // Token inválido o expirado, hacer logout
-      const { isAuthenticated, logout } = useAuthStore.getState();
-      if (isAuthenticated) {
-        logout();
-        window.location.href = '/auth/login';
-      }
+      // Usuario tenía sesión pero el token expiró localmente antes de la petición.
+      // Hacer logout; el response interceptor manejará la redirección si el
+      // servidor también responde 401.
+      logout();
     }
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Interceptor de Response: Manejar errores 401
@@ -38,9 +39,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token inválido o expirado
-      useAuthStore.getState().logout();
-      window.location.href = '/auth/login';
+      const { isAuthenticated, logout } = useAuthStore.getState();
+
+      // Solo redirigir si el usuario TENÍA sesión activa y el servidor la rechazó
+      // (token expirado/inválido en el servidor).
+      // Si isAuthenticated es false, el 401 viene de un intento de login con
+      // credenciales incorrectas — dejar que el onError del hook lo maneje con toast.
+      if (isAuthenticated) {
+        logout();
+        window.location.replace('/auth/login');
+      }
     }
     return Promise.reject(error);
   }

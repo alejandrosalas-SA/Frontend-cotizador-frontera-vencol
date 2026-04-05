@@ -9,6 +9,7 @@ interface SolicitudesFiltersState {
     dateRange: DateRange | undefined;
     fromInput: string;
     toInput: string;
+    paginaActual: number;
 
     // Actions
     setSearchApplicant: (val: string) => void;
@@ -18,6 +19,7 @@ interface SolicitudesFiltersState {
     setRangeOnly: (range: DateRange | undefined) => void;
     setFromInput: (val: string) => void;
     setToInput: (val: string) => void;
+    setPaginaActual: (n: number) => void;
     resetFilters: () => void;
 }
 
@@ -32,21 +34,26 @@ export const useSolicitudesStore = create<SolicitudesFiltersState>((set) => ({
     dateRange: undefined,
     fromInput: '',
     toInput: '',
+    paginaActual: 1,
 
-    setSearchApplicant: (searchApplicant) => set({ searchApplicant }),
-    setSearchVehicle: (searchVehicle) => set({ searchVehicle }),
-    setStatusFilter: (statusFilter) => set({ statusFilter }),
+    // Cada setter de filtro resetea la página a 1
+    setSearchApplicant: (searchApplicant) => set({ searchApplicant, paginaActual: 1 }),
+    setSearchVehicle:   (searchVehicle)   => set({ searchVehicle,   paginaActual: 1 }),
+    setStatusFilter:    (statusFilter)    => set({ statusFilter,    paginaActual: 1 }),
 
     setDateRange: (range) => set({
         dateRange: range,
         fromInput: range?.from ? formatInputDate(range.from) : '',
-        toInput: range?.to ? formatInputDate(range.to) : ''
+        toInput:   range?.to   ? formatInputDate(range.to)   : '',
+        paginaActual: 1,
     }),
 
-    setRangeOnly: (dateRange) => set({ dateRange }),
+    setRangeOnly: (dateRange) => set({ dateRange, paginaActual: 1 }),
 
     setFromInput: (fromInput) => set({ fromInput }),
-    setToInput: (toInput) => set({ toInput }),
+    setToInput:   (toInput)   => set({ toInput }),
+
+    setPaginaActual: (paginaActual) => set({ paginaActual }),
 
     resetFilters: () => set({
         searchApplicant: '',
@@ -54,6 +61,7 @@ export const useSolicitudesStore = create<SolicitudesFiltersState>((set) => ({
         statusFilter: 'all',
         dateRange: undefined,
         fromInput: '',
-        toInput: ''
+        toInput: '',
+        paginaActual: 1,
     }),
 }));
