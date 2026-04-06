@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Trash2, FileText, Search, CalendarIcon, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, FileText, Search, CalendarIcon, X, RefreshCw, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { SolicitudListItem } from '@/types';
 import { useSolicitudesList, useEliminarSolicitud } from '../../quote/hooks/useSolicitudes';
 import { useToast } from '@/lib/toast';
 import { useSolicitudesStore } from '@/stores/useSolicitudesStore';
+import { useSucursalesDisponibles } from '@/features/quote/hooks/useSucursalesDisponibles';
+import { useAuthStore } from '@/stores/auth';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -181,6 +183,10 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
     const [confirmId, setConfirmId] = useState<number | null>(null);
     const navigate = useNavigate();
 
+    const { user } = useAuthStore();
+    const rol = user?.id_rol ?? 3;
+    const { sucursales } = useSucursalesDisponibles();
+
     const {
         searchApplicant,
         searchVehicle,
@@ -189,6 +195,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
         fromInput,
         toInput,
         paginaActual,
+        idSucursal,
         setSearchApplicant,
         setSearchVehicle,
         setStatusFilter,
@@ -197,6 +204,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
         setToInput,
         setRangeOnly,
         setPaginaActual,
+        setIdSucursal,
         resetFilters,
     } = useSolicitudesStore();
 
@@ -216,7 +224,7 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
         resetFilters();
     };
 
-    const isFiltered = searchApplicant || searchVehicle || statusFilter !== 'all' || dateRange;
+    const isFiltered = searchApplicant || searchVehicle || statusFilter !== 'all' || dateRange || idSucursal != null;
 
     const handleFromInputChange = (val: string) => {
         setFromInput(val);
@@ -335,6 +343,33 @@ export const SolicitudesList = ({ onVerDetalle }: Props) => {
 
             <div className="mb-6 space-y-4">
                 <div className="flex flex-wrap items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    {/* Selector de sucursal: solo para admin (rol 1) y supervisor (rol 2) */}
+                    {(rol === 1 || rol === 2) && sucursales.length > 0 && (
+                        <div className="flex items-center gap-2 min-w-[200px]">
+                            <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
+                            <Select
+                                value={idSucursal != null ? String(idSucursal) : 'todas'}
+                                onValueChange={(val) =>
+                                    setIdSucursal(val === 'todas' ? null : parseInt(val))
+                                }
+                            >
+                                <SelectTrigger className="bg-slate-50/50 border-slate-200 text-sm w-full">
+                                    <SelectValue placeholder={rol === 1 ? 'Todas las sucursales' : 'Todas mis sucursales'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todas">
+                                        {rol === 1 ? 'Todas las sucursales' : 'Todas mis sucursales'}
+                                    </SelectItem>
+                                    {sucursales.map((s) => (
+                                        <SelectItem key={s.id} value={String(s.id)}>
+                                            {s.nombre}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
                     {/* Applicant Search */}
                     <div className="relative flex-1 min-w-[150px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

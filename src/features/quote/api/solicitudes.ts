@@ -15,6 +15,7 @@ export interface GetSolicitudesParams {
     vehiculo: string;
     status: string;
     dateRange: DateRange | undefined;
+    idSucursal?: number | null;
 }
 
 export const getSolicitudes = async (
@@ -25,11 +26,12 @@ export const getSolicitudes = async (
         tamanoPagina: params.tamanoPagina,
     };
 
-    if (params.solicitante) query.solicitante = params.solicitante;
-    if (params.vehiculo)    query.vehiculo    = params.vehiculo;
-    if (params.status !== 'all') query.status = params.status;
-    if (params.dateRange?.from) query.fechaDesde = format(params.dateRange.from, 'yyyy-MM-dd');
-    if (params.dateRange?.to)   query.fechaHasta = format(params.dateRange.to,   'yyyy-MM-dd');
+    if (params.solicitante)         query.solicitante = params.solicitante;
+    if (params.vehiculo)            query.vehiculo    = params.vehiculo;
+    if (params.status !== 'all')    query.status      = params.status;
+    if (params.dateRange?.from)     query.fechaDesde  = format(params.dateRange.from, 'yyyy-MM-dd');
+    if (params.dateRange?.to)       query.fechaHasta  = format(params.dateRange.to,   'yyyy-MM-dd');
+    if (params.idSucursal != null)  query.id_sucursal = params.idSucursal;
 
     const res = await api.get('/Solicitudes', { params: query });
     const raw = res.data;
@@ -70,7 +72,9 @@ export interface ConteosSolicitudes {
     borradores: number;
 }
 
-export const getConteosSolicitudes = async (): Promise<ConteosSolicitudes> => {
-    const res = await api.get('/Solicitudes/conteos');
+export const getConteosSolicitudes = async (idSucursal?: number | null): Promise<ConteosSolicitudes> => {
+    const params: Record<string, string | number> = {};
+    if (idSucursal != null) params.id_sucursal = idSucursal;
+    const res = await api.get('/Solicitudes/conteos', { params });
     return res.data;
 };

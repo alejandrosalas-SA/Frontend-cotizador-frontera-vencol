@@ -12,7 +12,7 @@ import { EstadisticasRoute } from './routes/app/estadisticas';
 
 export const createAppRouter = () =>
   createBrowserRouter([
-    // 1. Ruta Pública (Auth)
+    // 1. Rutas Públicas (Auth)
     {
       path: '/auth/login',
       element: <LoginRoute />,
@@ -36,38 +36,35 @@ export const createAppRouter = () =>
           element: <Navigate to="dashboard" replace />,
         },
         {
+          // Todos los roles autenticados
           path: 'dashboard',
           element: <DashboardRoute />,
         },
         {
+          // Todos los roles autenticados
           path: 'cotizar/:id?',
           element: <QuoteRoute />,
         },
         {
+          // Todos los roles autenticados (el backend filtra según el rol)
           path: 'solicitudes',
           element: <SolicitudesRoute />,
         },
         {
-          path: 'aprobaciones',
-          element: (
-            <ProtectedRoute requiredRole={2}>
-              <div>Vista de Aprobaciones (Placeholder)</div>
-            </ProtectedRoute>
-          ),
-        },
-        {
-          path: 'primas',
-          element: (
-            <ProtectedRoute requiredRole={1}>
-              <PrimasRoute />
-            </ProtectedRoute>
-          ),
-        },
-        {
+          // Solo Administrador y Supervisor
           path: 'estadisticas',
           element: (
-            <ProtectedRoute requiredRole={1}>
+            <ProtectedRoute allowedRoles={[1, 2]}>
               <EstadisticasRoute />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          // Solo Administrador
+          path: 'primas',
+          element: (
+            <ProtectedRoute allowedRoles={[1]}>
+              <PrimasRoute />
             </ProtectedRoute>
           ),
         },

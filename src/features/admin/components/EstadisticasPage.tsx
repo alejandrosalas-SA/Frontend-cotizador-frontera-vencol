@@ -18,7 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   BarChart2, DollarSign, TrendingUp, FileText,
-  CheckCircle, Percent, Tag, GripVertical, RotateCcw, Eye, EyeOff,
+  CheckCircle, Percent, Tag, GripVertical, RotateCcw, Eye, EyeOff, Building2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEstadisticas } from '../hooks/useEstadisticas';
 import { useDashboardLayout } from '../hooks/useDashboardLayout';
 import { KpiCard } from './KpiCard';
@@ -37,18 +38,20 @@ import { TopVehiculosChart } from './charts/TopVehiculosChart';
 import { TipoTransporteChart } from './charts/TipoTransporteChart';
 import { RendimientoSucursalChart } from './charts/RendimientoSucursalChart';
 import { TopEmpleadosChart } from './charts/TopEmpleadosChart';
+import { useSucursalesDisponibles } from '@/features/quote/hooks/useSucursalesDisponibles';
+import { useAuthStore } from '@/stores/auth';
 import type { DashboardEstadisticas } from '@/types';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
 const kpiLabels: Record<string, string> = {
-  emitidas: 'Solicitudes emitidas',
+  emitidas:   'Solicitudes emitidas',
   borradores: 'Total borradores',
   conversion: 'Ventas concretadas',
-  ingresos: 'Ingresos del mes',
-  ticket: 'Prima promedio',
-  crecimiento: 'Crecimiento mensual',
+  ingresos:   'Ingresos del mes',
+  ticket:     'Prima promedio',
+  crecimiento:'Crecimiento mensual',
 };
 
 // ─── Sortable wrapper ─────────────────────────────────────────────────────────
@@ -153,18 +156,18 @@ interface ChartWidgetProps {
 }
 
 const chartTitles: Record<string, string> = {
-  'top-vehiculos': 'Top 10 Vehículos Cotizados',
-  'tipo-transporte': 'Distribución por Tipo de Transporte',
-  'sucursales': 'Rendimiento por Sucursal',
-  'empleados': 'Top de Intermediarios',
+  'top-vehiculos':    'Top 10 Vehículos Cotizados',
+  'tipo-transporte':  'Distribución por Tipo de Transporte',
+  'sucursales':       'Rendimiento por Sucursal',
+  'empleados':        'Top de Intermediarios',
 };
 
 const ChartWidget = ({ id, data, dragHandleProps, onHide }: ChartWidgetProps) => {
   const content: Record<string, React.ReactNode> = {
-    'top-vehiculos': <TopVehiculosChart data={data.top_vehiculos} />,
+    'top-vehiculos':   <TopVehiculosChart data={data.top_vehiculos} />,
     'tipo-transporte': <TipoTransporteChart data={data.distribucion_transporte} />,
-    'sucursales': <RendimientoSucursalChart data={data.rendimiento_sucursales} />,
-    'empleados': <TopEmpleadosChart data={data.rendimiento_empleados} />,
+    'sucursales':      <RendimientoSucursalChart data={data.rendimiento_sucursales} />,
+    'empleados':       <TopEmpleadosChart data={data.rendimiento_empleados} />,
   };
 
   return (
@@ -202,22 +205,30 @@ const ChartWidget = ({ id, data, dragHandleProps, onHide }: ChartWidgetProps) =>
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export const EstadisticasPage = () => {
-  const { data, isLoading } = useEstadisticas();
+  const { user } = useAuthStore();
+  const rol = user?.id_rol ?? 3;
+
+  // Selector de sucursal (visible para admin y supervisor)
+  const [idSucursalSeleccionada, setIdSucursalSeleccionada] = useState<number | null>(null);
+  const { sucursales, isLoading: loadingSucursales } = useSucursalesDisponibles();
+
+  const { data, isLoading } = useEstadisticas(idSucursalSeleccionada);
+
   const {
     kpiOrder, chartOrder, setKpiOrder, setChartOrder, resetLayout,
     hiddenKpis, hiddenCharts, hiddenBadges,
     toggleKpiVisibility, toggleChartVisibility, toggleBadgeVisibility,
   } = useDashboardLayout();
-  const [activeKpiId, setActiveKpiId] = useState<string | null>(null);
+  const [activeKpiId, setActiveKpiId]     = useState<string | null>(null);
   const [activeChartId, setActiveChartId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  const visibleKpis = kpiOrder.filter(id => !hiddenKpis.includes(id));
+  const visibleKpis   = kpiOrder.filter(id => !hiddenKpis.includes(id));
   const visibleCharts = chartOrder.filter(id => !hiddenCharts.includes(id));
-  const hasHidden = hiddenKpis.length > 0 || hiddenCharts.length > 0;
+  const hasHidden     = hiddenKpis.length > 0 || hiddenCharts.length > 0;
 
   if (isLoading || !data) {
     return (
@@ -237,15 +248,48 @@ export const EstadisticasPage = () => {
     );
   }
 
+  const placeholderSucursal = rol === 1 ? 'Todas las sucursales' : 'Todas mis sucursales';
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <BarChart2 className="h-7 w-7 text-[#003366]" />
           <h1 className="text-2xl font-bold text-[#003366]">Estadísticas</h1>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Selector de sucursal: visible para admin (rol 1) y supervisor (rol 2) */}
+          {(rol === 1 || rol === 2) && sucursales.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
+              <Select
+                value={idSucursalSeleccionada != null ? String(idSucursalSeleccionada) : 'todas'}
+                onValueChange={(val) =>
+                  setIdSucursalSeleccionada(val === 'todas' ? null : parseInt(val))
+                }
+              >
+                <SelectTrigger className="w-[200px] bg-white border-slate-200 text-sm">
+                  <SelectValue placeholder={placeholderSucursal} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">{placeholderSucursal}</SelectItem>
+                  {sucursales.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Cargando sucursales */}
+          {(rol === 1 || rol === 2) && loadingSucursales && (
+            <div className="w-[200px] h-9 bg-slate-200 rounded animate-pulse" />
+          )}
+
           {/* Menú de visibilidad */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

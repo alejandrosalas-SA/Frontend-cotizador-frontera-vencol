@@ -10,6 +10,7 @@ interface SolicitudesFiltersState {
     fromInput: string;
     toInput: string;
     paginaActual: number;
+    idSucursal: number | null; // filtro por sucursal (para admin y supervisor)
 
     // Actions
     setSearchApplicant: (val: string) => void;
@@ -20,6 +21,7 @@ interface SolicitudesFiltersState {
     setFromInput: (val: string) => void;
     setToInput: (val: string) => void;
     setPaginaActual: (n: number) => void;
+    setIdSucursal: (id: number | null) => void;
     resetFilters: () => void;
 }
 
@@ -35,11 +37,12 @@ export const useSolicitudesStore = create<SolicitudesFiltersState>((set) => ({
     fromInput: '',
     toInput: '',
     paginaActual: 1,
+    idSucursal: null,
 
-    // Cada setter de filtro resetea la página a 1
     setSearchApplicant: (searchApplicant) => set({ searchApplicant, paginaActual: 1 }),
     setSearchVehicle:   (searchVehicle)   => set({ searchVehicle,   paginaActual: 1 }),
     setStatusFilter:    (statusFilter)    => set({ statusFilter,    paginaActual: 1 }),
+    setIdSucursal:      (idSucursal)      => set({ idSucursal,      paginaActual: 1 }),
 
     setDateRange: (range) => set({
         dateRange: range,
@@ -63,5 +66,6 @@ export const useSolicitudesStore = create<SolicitudesFiltersState>((set) => ({
         fromInput: '',
         toInput: '',
         paginaActual: 1,
+        idSucursal: null,
     }),
 }));

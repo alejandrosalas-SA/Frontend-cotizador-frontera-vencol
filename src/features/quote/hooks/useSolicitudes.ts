@@ -15,6 +15,7 @@ export const useSolicitudesList = () => {
         statusFilter,
         dateRange,
         paginaActual,
+        idSucursal,
     } = useSolicitudesStore();
 
     return useQuery({
@@ -26,6 +27,7 @@ export const useSolicitudesList = () => {
             statusFilter,
             dateRange?.from?.toISOString(),
             dateRange?.to?.toISOString(),
+            idSucursal,
         ],
         queryFn: () =>
             solicitudesApi.getSolicitudes({
@@ -35,10 +37,11 @@ export const useSolicitudesList = () => {
                 vehiculo: searchVehicle,
                 status: statusFilter,
                 dateRange,
+                idSucursal,
             }),
         staleTime: 1000 * 30,
         refetchInterval: 1000 * 60,
-        placeholderData: (prev) => prev, // mantiene datos previos al cambiar de página (evita parpadeo)
+        placeholderData: (prev) => prev,
     });
 };
 
@@ -71,10 +74,10 @@ export const useActualizarSolicitud = () => {
 };
 
 // Hook para conteos del dashboard
-export const useConteosSolicitudes = () => {
+export const useConteosSolicitudes = (idSucursal?: number | null) => {
     return useQuery({
-        queryKey: [QUERY_KEY, 'conteos'],
-        queryFn: solicitudesApi.getConteosSolicitudes,
+        queryKey: [QUERY_KEY, 'conteos', idSucursal ?? null],
+        queryFn:  () => solicitudesApi.getConteosSolicitudes(idSucursal),
         staleTime: 1000 * 30,
     });
 };

@@ -4,19 +4,17 @@ import { useAuthStore } from '@/stores/auth';
 
 interface ProtectedRouteProps {
     children: ReactNode;
-    requiredRole?: number; // id_rol requerido (ej: 2 para Supervisor)
+    allowedRoles?: number[]; // roles permitidos (ej: [1, 2] para admin y supervisor)
 }
 
-export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     const { isAuthenticated, user } = useAuthStore();
 
-    // Si no está autenticado, redirigir al login
     if (!isAuthenticated || !user) {
         return <Navigate to="/auth/login" replace />;
     }
 
-    // Si se requiere un rol específico y el usuario no lo tiene
-    if (requiredRole !== undefined && user.id_rol !== requiredRole) {
+    if (allowedRoles !== undefined && !allowedRoles.includes(user.id_rol)) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-50">
                 <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -50,6 +48,5 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
         );
     }
 
-    // Usuario autenticado y con rol correcto
     return <>{children}</>;
 };
