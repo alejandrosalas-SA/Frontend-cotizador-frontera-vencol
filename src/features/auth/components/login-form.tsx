@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { loginSchema, type LoginFormData } from '../schemas/loginSchema';
 import { useLogin } from '../hooks/useLogin';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export const LoginForm = () => {
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -44,15 +46,25 @@ export const LoginForm = () => {
         <label htmlFor="password" className="block text-md font-medium text-slate-700 mb-1.5 text-left">
           Contraseña
         </label>
-        <input
-          id="password"
-          type="password"
-          {...register('Password')}
-          placeholder="••••••••"
-          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${errors.Password ? 'border-destructive' : 'border-input'
-            }`}
-          disabled={loginMutation.isPending}
-        />
+        <div className="relative">
+          <input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            {...register('Password')}
+            placeholder="••••••••"
+            className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all pr-10 ${errors.Password ? 'border-destructive' : 'border-input'
+              }`}
+            disabled={loginMutation.isPending}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
         {errors.Password && (
           <p className="mt-1 text-xs text-destructive">{errors.Password.message}</p>
         )}

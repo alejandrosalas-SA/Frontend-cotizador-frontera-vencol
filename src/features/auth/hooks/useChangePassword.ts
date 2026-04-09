@@ -12,9 +12,10 @@ export const useChangePassword = () => {
                 autoClose: 4000,
             });
         },
-        onError: (error: Error) => {
+        onError: (error: any) => {
+            const errorMessage = error.response?.data?.message || error.response?.data?.error?.message || error.message;
             // Mostrar mensaje de error
-            toast.error(error.message, {
+            toast.error(errorMessage || 'Error al cambiar la contraseña. Intente nuevamente.', {
                 position: 'top-right',
                 autoClose: 5000,
             });

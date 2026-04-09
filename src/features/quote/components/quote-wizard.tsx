@@ -16,6 +16,8 @@ export const QuoteWizard = () => {
 
   const { step, setStep, data, setAllData, reset, setCotizacionFinal, updateData, setConOpcional } = useQuoteStore();
   const [successId, setSuccessId] = useState<number | null>(null);
+  // Ref: persiste el status del último handleFinalize sin disparar re-renders adicionales
+  const lastStatusRef = useRef<number>(0);
   const { error: toastError, success: toastSuccess } = useToast();
 
   const applicantFormRef = useRef<{ submitForm: () => Promise<boolean>, savePartial?: () => void }>(null);
@@ -194,6 +196,7 @@ export const QuoteWizard = () => {
         { id: Number(id), payload },
         {
           onSuccess: () => {
+            lastStatusRef.current = status;
             setSuccessId(Number(id));
             reset();
             toastSuccess(`${status === 1 ? 'Cotización' : 'Borrador'} #${id} actualizado con éxito`);
@@ -207,6 +210,7 @@ export const QuoteWizard = () => {
     } else {
       createSolicitud(payload as SolicitudPayload, {
         onSuccess: (res) => {
+          lastStatusRef.current = status;
           setSuccessId(res.id_solicitud);
           reset();
           toastSuccess(`${status === 1 ? 'Cotización' : 'Borrador'} #${res.id_solicitud} generado con éxito`);
@@ -220,7 +224,15 @@ export const QuoteWizard = () => {
   };
 
   // --- Success screen ---
+  // El título se deriva: isEditing ya está en scope (no cambia en el ciclo de vida)
+  // y lastStatusRef guarda el último status sin necesitar un estado extra.
   if (successId) {
+    const successTitle = isEditing
+      ? '¡Solicitud Actualizada!'
+      : lastStatusRef.current === 1
+      ? '¡Cotización Generada!'
+      : '¡Cotización Emitida!';
+
     return (
       <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 max-w-5xl mx-auto text-center">
         <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mx-auto mb-4">
@@ -228,7 +240,7 @@ export const QuoteWizard = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-[#003366] mb-2">¡Cotización Generada!</h2>
+        <h2 className="text-2xl font-bold text-[#003366] mb-2">{successTitle}</h2>
         <p className="text-slate-500 mb-1">Su solicitud fue registrada exitosamente.</p>
         <p className="text-slate-500 mb-6">
           Número de solicitud: <span className="font-bold text-[#003366]">#{successId}</span>

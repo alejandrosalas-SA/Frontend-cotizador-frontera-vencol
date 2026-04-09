@@ -5,7 +5,7 @@ import { changePasswordSchema, type ChangePasswordFormData } from '../schemas/ch
 import { useChangePassword } from '../hooks/useChangePassword';
 import { useAuthStore } from '@/stores/auth';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
 const strengthLevels = [
@@ -19,6 +19,9 @@ export const ChangePasswordForm = () => {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showPasswordOld, setShowPasswordOld] = useState(false);
+  const [showPasswordNew, setShowPasswordNew] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const {
     register,
@@ -103,16 +106,26 @@ export const ChangePasswordForm = () => {
           <label htmlFor="passwordOld" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
             Contraseña Actual
           </label>
-          <input
-            id="passwordOld"
-            type="password"
-            {...register('PasswordOld')}
-            placeholder="••••••••"
-            className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
-              errors.PasswordOld ? 'border-destructive' : 'border-input'
-            }`}
-            disabled={changePasswordMutation.isPending}
-          />
+          <div className="relative">
+            <input
+              id="passwordOld"
+              type={showPasswordOld ? "text" : "password"}
+              {...register('PasswordOld')}
+              placeholder="••••••••"
+              className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all pr-10 ${
+                errors.PasswordOld ? 'border-destructive' : 'border-input'
+              }`}
+              disabled={changePasswordMutation.isPending}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPasswordOld(!showPasswordOld)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+              tabIndex={-1}
+            >
+              {showPasswordOld ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.PasswordOld && (
             <p className="mt-1 text-xs text-red-600">{errors.PasswordOld.message}</p>
           )}
@@ -123,16 +136,26 @@ export const ChangePasswordForm = () => {
           <label htmlFor="passwordNew" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
             Nueva Contraseña
           </label>
-          <input
-            id="passwordNew"
-            type="password"
-            {...register('PasswordNew')}
-            placeholder="••••••••"
-            className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
-              errors.PasswordNew ? 'border-destructive' : 'border-input'
-            }`}
-            disabled={changePasswordMutation.isPending}
-          />
+          <div className="relative">
+            <input
+              id="passwordNew"
+              type={showPasswordNew ? "text" : "password"}
+              {...register('PasswordNew')}
+              placeholder="••••••••"
+              className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all pr-10 ${
+                errors.PasswordNew ? 'border-destructive' : 'border-input'
+              }`}
+              disabled={changePasswordMutation.isPending}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPasswordNew(!showPasswordNew)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+              tabIndex={-1}
+            >
+              {showPasswordNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.PasswordNew && (
             <p className="mt-1 text-xs text-red-600">{errors.PasswordNew.message}</p>
           )}
@@ -170,16 +193,26 @@ export const ChangePasswordForm = () => {
           <label htmlFor="passwordConfirm" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
             Confirmar Nueva Contraseña
           </label>
-          <input
-            id="passwordConfirm"
-            type="password"
-            {...register('PasswordConfirm')}
-            placeholder="••••••••"
-            className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
-              errors.PasswordConfirm ? 'border-destructive' : 'border-input'
-            }`}
-            disabled={changePasswordMutation.isPending}
-          />
+          <div className="relative">
+            <input
+              id="passwordConfirm"
+              type={showPasswordConfirm ? "text" : "password"}
+              {...register('PasswordConfirm')}
+              placeholder="••••••••"
+              className={`w-full px-3 py-2 text-sm border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all pr-10 ${
+                errors.PasswordConfirm ? 'border-destructive' : 'border-input'
+              }`}
+              disabled={changePasswordMutation.isPending}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+              tabIndex={-1}
+            >
+              {showPasswordConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.PasswordConfirm && (
             <p className="mt-1 text-xs text-red-600">{errors.PasswordConfirm.message}</p>
           )}

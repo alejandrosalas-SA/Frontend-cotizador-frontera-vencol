@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,7 +12,14 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { useCreatePassword } from '../hooks/useCreatePassword';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+
+const strengthLevels = [
+  { score: 1, label: 'Muy débil', color: 'bg-red-500' },
+  { score: 2, label: 'Débil', color: 'bg-orange-400' },
+  { score: 3, label: 'Aceptable', color: 'bg-yellow-500' },
+  { score: 4, label: 'Fuerte ✓', color: 'bg-green-500' },
+];
 
 const createPasswordSchema = z
     .object({
@@ -30,6 +38,8 @@ export const CreatePasswordForm = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const createPasswordMutation = useCreatePassword();
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Pre-open email from URL if available, but allow user to edit/confirm
     const emailFromUrl = searchParams.get('email') || '';
@@ -56,6 +66,15 @@ export const CreatePasswordForm = () => {
             }
         });
     };
+
+    const watchPassword = form.watch('password');
+    const strengthScore = [
+        watchPassword?.length >= 8,
+        /[A-Z]/.test(watchPassword || ''),
+        /[a-z]/.test(watchPassword || ''),
+        /\d/.test(watchPassword || ''),
+    ].filter(Boolean).length;
+    const currentStrength = strengthLevels.find((l) => l.score === strengthScore);
 
     return (
         <div className="grid gap-6">
@@ -94,16 +113,49 @@ export const CreatePasswordForm = () => {
                                     Nueva Contraseña
                                 </label>
                                 <FormControl>
-                                    <input
-                                        id="password"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        {...field}
-                                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${form.formState.errors.password ? 'border-destructive' : 'border-input'
-                                            }`}
-                                        disabled={createPasswordMutation.isPending}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            {...field}
+                                            className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all pr-10 ${form.formState.errors.password ? 'border-destructive' : 'border-input'
+                                                }`}
+                                            disabled={createPasswordMutation.isPending}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                            tabIndex={-1}
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
                                 </FormControl>
+                                {watchPassword && (
+                                    <div className="mt-2 text-left">
+                                        <div className="flex gap-1 mb-1">
+                                            {[1, 2, 3, 4].map((level) => (
+                                                <div
+                                                    key={level}
+                                                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${level <= strengthScore
+                                                            ? (currentStrength?.color ?? 'bg-secondary')
+                                                            : 'bg-secondary'
+                                                        }`}
+                                                />
+                                            ))}
+                                        </div>
+                                        {currentStrength && (
+                                            <p className={`text-xs font-medium ${strengthScore === 4 ? 'text-green-600'
+                                                    : strengthScore === 3 ? 'text-yellow-600'
+                                                        : 'text-red-500'
+                                                }`}>
+                                                {currentStrength.label} — mín. 8 chars, mayúscula, minúscula y número
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -118,15 +170,25 @@ export const CreatePasswordForm = () => {
                                     Confirmar Contraseña
                                 </label>
                                 <FormControl>
-                                    <input
-                                        id="confirmPassword"
-                                        type="password"
-                                        placeholder="••••••••"
-                                        {...field}
-                                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${form.formState.errors.confirmPassword ? 'border-destructive' : 'border-input'
-                                            }`}
-                                        disabled={createPasswordMutation.isPending}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            id="confirmPassword"
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            {...field}
+                                            className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all pr-10 ${form.formState.errors.confirmPassword ? 'border-destructive' : 'border-input'
+                                                }`}
+                                            disabled={createPasswordMutation.isPending}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                            tabIndex={-1}
+                                        >
+                                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
